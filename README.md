@@ -7,3 +7,5 @@ Brent Bolden
 Davante Smith
 
 Tiana Lindsey
+
+Gabriel Kominas
