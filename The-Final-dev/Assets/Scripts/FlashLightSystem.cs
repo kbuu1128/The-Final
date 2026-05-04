@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System.Collections;
 
 public class FlashlightSystem : MonoBehaviour
@@ -11,36 +12,93 @@ public class FlashlightSystem : MonoBehaviour
     public GameObject bigJumpscareImage;
     public AudioSource jumpscareSound;
 
+    public Slider batteryBar;
+
     private bool dead = false;
+
+    void Start()
+    {
+        battery = Mathf.Clamp(battery, 0, 100);
+
+        if (batteryBar != null)
+        {
+            batteryBar.minValue = 0;
+            batteryBar.maxValue = 100;
+            batteryBar.value = battery;
+        }
+
+        if (bigJumpscareImage != null)
+        {
+            bigJumpscareImage.SetActive(false);
+        }
+    }
 
     void Update()
     {
         if (dead) return;
 
         battery -= drainRate * Time.deltaTime;
+        battery = Mathf.Clamp(battery, 0, 100);
+
+        UpdateBatteryBar();
 
         if (battery <= 0)
         {
-            battery = 0;
             StartCoroutine(DeathJumpscare());
         }
     }
 
     public void AddBattery(float amount)
     {
+        if (dead) return;
+
         battery += amount;
-        if (battery > 100) battery = 100;
+        battery = Mathf.Clamp(battery, 0, 100);
+
+        UpdateBatteryBar();
+
+        if (flashlightLight != null && battery > 0)
+        {
+            flashlightLight.SetActive(true);
+        }
+    }
+
+    void UpdateBatteryBar()
+    {
+        if (batteryBar != null)
+        {
+            batteryBar.value = battery;
+        }
     }
 
     IEnumerator DeathJumpscare()
     {
         dead = true;
-        flashlightLight.SetActive(false);
-        bigJumpscareImage.SetActive(true);
-        jumpscareSound.Play();
 
-        yield return new WaitForSeconds(2f);
+        if (flashlightLight != null)
+        {
+            flashlightLight.SetActive(false);
+        }
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (bigJumpscareImage != null)
+        {
+            bigJumpscareImage.SetActive(true);
+        }
+
+        // ?? HIDE UI BAR
+        if (batteryBar != null)
+        {
+            batteryBar.gameObject.SetActive(false);
+        }
+
+        if (jumpscareSound != null)
+        {
+            jumpscareSound.Play();
+        }
+
+        yield return new WaitForSeconds(6f);
+
+        PlayerPrefs.SetString("RestartLevel", SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("GameOver");
     }
 }
